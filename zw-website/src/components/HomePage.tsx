@@ -15,7 +15,7 @@ import { XiaowangGuide } from "./XiaowangGuide";
 
 const nav = [
   ["首页", "top"], ["产品能力", "products"],
-  ["案例成果", "solutions"], ["视频创作", "videos"], ["关于中网", "about"],["新闻动态", "news"],
+  ["案例成果", "solutions"], ["视频创作", "videos"],["发展历程", "about"], ["文化与环境", "culture"], ["新闻动态", "news"],
 ];
 
 const platforms = [
@@ -30,6 +30,23 @@ const industries = [
   { name: "智慧校园", tag: "校园守护", desc: "校园安防、防欺凌与应急管理", icon: Student },
   { name: "智能工业", tag: "安全生产", desc: "设备监测、智能制造与数字运营", icon: Factory },
   { name: "公共安全", tag: "风险防控", desc: "视频感知、实时研判与闭环处置", icon: LockKey },
+];
+
+const cultureValues = [
+  { title: "高效", en: "EFFICIENCY", desc: "尊重目标与时间，以专业协同推动成果落地。" },
+  { title: "诚信", en: "INTEGRITY", desc: "坚守长期主义，用可靠行动赢得客户信赖。" },
+  { title: "担当", en: "RESPONSIBILITY", desc: "面对复杂问题主动向前，对结果负责到底。" },
+  { title: "创新", en: "INNOVATION", desc: "持续探索技术边界，让新能力进入真实场景。" },
+  { title: "利他", en: "ALTRUISM", desc: "与客户、伙伴和员工共同创造可持续价值。" },
+];
+
+const offices = [
+  { name: "接待区", en: "RECEPTION", image: "/media/company/office-reception.jpg", desc: "开放、清晰的第一印象，传递中网专业可信的品牌气质。" },
+  { name: "休闲吧", en: "LOUNGE", image: "/media/company/office-lounge.jpg", desc: "让阅读、交流与灵感自然发生的共享空间。" },
+  { name: "办公区", en: "WORKSPACE", image: "/media/company/office-workspace.jpg", desc: "明亮有序的协作环境，支持团队专注与高效配合。" },
+  { name: "文化墙", en: "CULTURE WALL", image: "/media/company/office-culture-wall.jpg", desc: "以发展历程记录初心，也让每一次成长清晰可见。" },
+  { name: "会议室", en: "MEETING ROOM", image: "/media/company/office-meeting-room.jpg", desc: "承载共识、研讨与组织连接的多功能会议空间。" },
+  { name: "展示室", en: "SHOWROOM", image: "/media/company/office-showroom.jpg", desc: "集中呈现安全大数据与智慧应用的实践成果。" },
 ];
 
 const seasons = [
@@ -65,6 +82,7 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [category, setCategory] = useState("全部");
   const [activeSeason, setActiveSeason] = useState("spring");
+  const [activeOffice, setActiveOffice] = useState(0);
   const [activeVideo, setActiveVideo] = useState<{ title: string; type: string; src: string } | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
 
@@ -223,7 +241,7 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
           <div><strong>80<sup>%</sup></strong><span>典型场景效率提升</span></div>
           <div><ChartLineUp weight="thin" /><span>从规划、建设到长期运营</span></div>
         </div>
-      </section>
+      </section>      
 
       <section id="videos" className="season-center dark-section">
         <div className="section-heading split inverse">
@@ -264,6 +282,90 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
       <section id="about" className="timeline-premium ivory-section">
         <div className="section-heading split"><div><p className="eyebrow red">SINCE 2002</p><h2>与时代同行</h2></div><p>从技术积累到产业协同，完整记录中网在发展、资质、研发与荣誉四个维度的重要时刻。</p></div>
         <HistoryTimeline items={timeline} />
+      </section>
+
+      <section id="culture" className="culture-section dark-section">
+        <div className="culture-grid" aria-hidden="true" />
+        <div className="culture-heading">
+          <div>
+            <p className="eyebrow">CULTURE IN ACTION</p>
+            <h2>技术有锋芒，<br />文化有温度。</h2>
+          </div>
+          <p>中网华信以客户为本，把价值观落实到每一次协作、交付与创新之中，让技术进步与组织成长彼此成就。</p>
+        </div>
+        <div className="culture-principles">
+          <article className="culture-principle">
+            <span>01 / MISSION</span>
+            <small>使命</small>
+            <h3>让数据更安全、<br />更智慧</h3>
+          </article>
+          <article className="culture-principle">
+            <span>02 / VISION</span>
+            <small>愿景</small>
+            <h3>成为领先可信赖的<br />数字技术服务商</h3>
+          </article>
+          <article className="culture-principle">
+            <span>03 / STRATEGY</span>
+            <small>战略</small>
+            <h3>安全大数据<br /><em>+</em> 智慧应用</h3>
+          </article>
+        </div>
+        <div className="culture-values">
+          <div className="culture-values-intro">
+            <span>OUR VALUES</span>
+            <h3>五个关键词，<br />一种共同选择。</h3>
+          </div>
+          {cultureValues.map((value, index) => (
+            <article key={value.title}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <small>{value.en}</small>
+              <h4>{value.title}</h4>
+              <p>{value.desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="office-section ivory-section">
+        <div className="section-heading split">
+          <div><p className="eyebrow red">INSIDE ZW</p><h2>在这里，共创日常</h2></div>
+          <p>空间不只是工作的容器，也承载交流、沉淀与创新。走进中网，感受一支科技团队真实而有序的日常。</p>
+        </div>
+        <div className="office-gallery">
+          <div className="office-stage">
+            {offices.map((office, index) => (
+              <img
+                key={office.image}
+                src={office.image}
+                alt={`中网华信${office.name}`}
+                className={activeOffice === index ? "active" : ""}
+              />
+            ))}
+            <div className="office-stage-copy">
+              <span>{String(activeOffice + 1).padStart(2, "0")} / {String(offices.length).padStart(2, "0")}</span>
+              <small>{offices[activeOffice].en}</small>
+              <h3>{offices[activeOffice].name}</h3>
+              <p>{offices[activeOffice].desc}</p>
+            </div>
+          </div>
+          <div className="office-index" role="tablist" aria-label="办公环境">
+            {offices.map((office, index) => (
+              <button
+                key={office.name}
+                type="button"
+                role="tab"
+                aria-selected={activeOffice === index}
+                className={activeOffice === index ? "active" : ""}
+                onClick={() => setActiveOffice(index)}
+              >
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <strong>{office.name}</strong>
+                <small>{office.en}</small>
+                <ArrowRight />
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section id="news" className="news-premium">
