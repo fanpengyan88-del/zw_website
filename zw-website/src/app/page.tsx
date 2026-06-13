@@ -10,7 +10,7 @@ async function getNews() {
     return fallbackNews.map((item, index) => ({
       id: `fallback-${index}`,
       ...item,
-      url: null,
+      href: `/news/${item.slug}`,
     }));
   }
 
@@ -21,8 +21,12 @@ async function getNews() {
       take: 6,
       select: {
         id: true,
+        slug: true,
         title: true,
+        summary: true,
+        cover: true,
         category: true,
+        source: true,
         sourceUrl: true,
         publishedAt: true,
         updatedAt: true,
@@ -31,10 +35,12 @@ async function getNews() {
     if (articles.length > 0) {
       return articles.map((article) => ({
         id: article.id,
+        href: `/news/${article.slug}`,
         date: (article.publishedAt || article.updatedAt).toISOString().slice(0, 10),
         title: article.title,
-        tag: article.category,
-        url: article.sourceUrl,
+        summary: article.summary,
+        cover: article.cover,
+        tag: article.source === "wechat" ? "中网华信" : article.category,
       }));
     }
   } catch {
@@ -44,7 +50,7 @@ async function getNews() {
   return fallbackNews.map((item, index) => ({
     id: `fallback-${index}`,
     ...item,
-    url: null,
+    href: `/news/${item.slug}`,
   }));
 }
 

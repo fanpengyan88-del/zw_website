@@ -20,7 +20,7 @@ const revealGroups = [
   ".season-videos button",
   ".season-coming > *",
   ".history-showcase",
-  ".news-list article",
+  ".news-card",
   ".contact-copy > *",
   ".lead-form > *",
   "footer > *",

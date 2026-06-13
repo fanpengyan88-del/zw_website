@@ -1,8 +1,8 @@
 "use client";
 
 import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
-import { useEffect, useRef, useState } from "react";
-import type { CSSProperties, KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties, FocusEvent, KeyboardEvent } from "react";
 import type { TimelineYear } from "@/data/content";
 
 type HistoryTimelineProps = {
@@ -16,6 +16,9 @@ const phases = [
   { until: 2025, name: "生态拓展", en: "ECOSYSTEM" },
 ];
 
+const AUTO_PLAY_INTERVAL = 5000;
+const CONTENT_FADE_DURATION = 160;
+
 function getPhase(year: string) {
   if (year === "未来") return { name: "无限可能", en: "TO THE FUTURE" };
   const numericYear = Number(year);
@@ -24,10 +27,84 @@ function getPhase(year: string) {
 
 export function HistoryTimeline({ items }: HistoryTimelineProps) {
   const [activeIndex, setActiveIndex] = useState(items.length - 1);
+  const [isContentFading, setIsContentFading] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isFocusWithin, setIsFocusWithin] = useState(false);
+  const [isTouching, setIsTouching] = useState(false);
+  const [isPageVisible, setIsPageVisible] = useState(true);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const yearsRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
+  const fadeTimerRef = useRef<number | null>(null);
+  const activeIndexRef = useRef(activeIndex);
   const active = items[activeIndex];
   const phase = getPhase(active.year);
+  const shouldAutoPlay = !isHovering
+    && !isFocusWithin
+    && !isTouching
+    && isPageVisible
+    && !prefersReducedMotion
+    && items.length > 1;
+
+  useEffect(() => {
+    activeIndexRef.current = activeIndex;
+  }, [activeIndex]);
+
+  const select = useCallback((index: number) => {
+    const nextIndex = Math.max(0, Math.min(items.length - 1, index));
+    if (nextIndex === activeIndexRef.current) return;
+
+    if (fadeTimerRef.current !== null) {
+      window.clearTimeout(fadeTimerRef.current);
+    }
+
+    if (prefersReducedMotion) {
+      setActiveIndex(nextIndex);
+      return;
+    }
+
+    setIsContentFading(true);
+    fadeTimerRef.current = window.setTimeout(() => {
+      activeIndexRef.current = nextIndex;
+      setActiveIndex(nextIndex);
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => setIsContentFading(false));
+      });
+      fadeTimerRef.current = null;
+    }, CONTENT_FADE_DURATION);
+  }, [items.length, prefersReducedMotion]);
+
+  useEffect(() => () => {
+    if (fadeTimerRef.current !== null) {
+      window.clearTimeout(fadeTimerRef.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateMotionPreference = () => setPrefersReducedMotion(mediaQuery.matches);
+    updateMotionPreference();
+    mediaQuery.addEventListener("change", updateMotionPreference);
+
+    const updateVisibility = () => setIsPageVisible(!document.hidden);
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateMotionPreference);
+      document.removeEventListener("visibilitychange", updateVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!shouldAutoPlay) return;
+
+    const timer = window.setInterval(() => {
+      select((activeIndexRef.current + 1) % items.length);
+    }, AUTO_PLAY_INTERVAL);
+
+    return () => window.clearInterval(timer);
+  }, [items.length, select, shouldAutoPlay]);
 
   useEffect(() => {
     const container = yearsRef.current;
@@ -38,12 +115,14 @@ export function HistoryTimeline({ items }: HistoryTimelineProps) {
     container.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
   }, [activeIndex]);
 
-  function select(index: number) {
-    setActiveIndex(Math.max(0, Math.min(items.length - 1, index)));
+  function move(direction: -1 | 1) {
+    select(activeIndexRef.current + direction);
   }
 
-  function move(direction: -1 | 1) {
-    select(activeIndex + direction);
+  function handleBlur(event: FocusEvent<HTMLDivElement>) {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      setIsFocusWithin(false);
+    }
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -72,40 +151,54 @@ export function HistoryTimeline({ items }: HistoryTimelineProps) {
       role="region"
       aria-label="中网公司发展历程"
       onKeyDown={handleKeyDown}
-      onTouchStart={(event) => { touchStartX.current = event.touches[0].clientX; }}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+      onFocus={() => setIsFocusWithin(true)}
+      onBlur={handleBlur}
+      onTouchStart={(event) => {
+        setIsTouching(true);
+        touchStartX.current = event.touches[0].clientX;
+      }}
       onTouchEnd={(event) => {
         if (touchStartX.current === null) return;
         const distance = event.changedTouches[0].clientX - touchStartX.current;
         if (Math.abs(distance) > 55) move(distance > 0 ? -1 : 1);
         touchStartX.current = null;
+        setIsTouching(false);
+      }}
+      onTouchCancel={() => {
+        touchStartX.current = null;
+        setIsTouching(false);
       }}
     >
-      <div className="history-stage" key={active.year}>
-        <div className="history-ambient" aria-hidden="true">
-          <span>{active.year}</span>
-          <i />
-        </div>
+      <div className="history-stage">
+        <div className={`history-content${isContentFading ? " is-fading" : ""}`}>
+          <div className="history-ambient" aria-hidden="true">
+            <span>{active.year}</span>
+            <i />
+          </div>
 
-        <div className="history-year">
-          <p>{phase.en}</p>
-          <strong>{active.year}</strong>
-          <h3>{phase.name}</h3>
-          <span>第 {String(activeIndex + 1).padStart(2, "0")} 个年度节点</span>
-        </div>
+          <div className="history-year">
+            <p>{phase.en}</p>
+            <strong>{active.year}</strong>
+            <h3>{phase.name}</h3>
+            <span>第 {String(activeIndex + 1).padStart(2, "0")} 个年度节点</span>
+          </div>
 
-        <div
-          className={`history-events count-${active.events.length}`}
-          style={{ "--event-count": active.events.length } as CSSProperties}
-        >
-          {active.events.map((event, index) => (
-            <article key={`${event.category}-${event.title}`}>
-              <div>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <small data-category={event.category}>{event.category}</small>
-              </div>
-              <p>{event.title}</p>
-            </article>
-          ))}
+          <div
+            className={`history-events count-${active.events.length}`}
+            style={{ "--event-count": active.events.length } as CSSProperties}
+          >
+            {active.events.map((event, index) => (
+              <article key={`${event.category}-${event.title}`}>
+                <div>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <small data-category={event.category}>{event.category}</small>
+                </div>
+                <p>{event.title}</p>
+              </article>
+            ))}
+          </div>
         </div>
 
         <div className="history-stage-controls">
@@ -132,7 +225,7 @@ export function HistoryTimeline({ items }: HistoryTimelineProps) {
       <div className="history-navigation">
         <div className="history-navigation-copy">
           <b>发展坐标</b>
-          <span>点击年份切换 · 支持左右滑动</span>
+          <span>自动轮播 · 点击年份或左右滑动切换</span>
         </div>
         <div className="history-years" ref={yearsRef}>
           {items.map((item, index) => (

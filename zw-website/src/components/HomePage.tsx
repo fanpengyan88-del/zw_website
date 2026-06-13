@@ -4,6 +4,7 @@ import {
   ArrowRight, Brain, Briefcase, Buildings, ChartLineUp, Database, Factory,
   List, LockKey, Phone, Play, ShieldCheck, Student, X,
 } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { products, timeline } from "@/data/content";
 import { HistoryTimeline } from "./HistoryTimeline";
@@ -75,14 +76,39 @@ type NewsArticle = {
   date: string;
   title: string;
   tag: string;
-  url: string | null;
+  summary?: string | null;
+  cover?: string | null;
+  href: string;
 };
+
+const NEWS_FALLBACK_COVER = "/media/news/default-news-cover.png";
+
+function NewsImage({ article, priority = false }: { article: NewsArticle; priority?: boolean }) {
+  return (
+    <img
+      src={article.cover || NEWS_FALLBACK_COVER}
+      alt={article.cover ? `${article.title}封面` : ""}
+      className={article.cover ? "" : "is-fallback"}
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
+      referrerPolicy="no-referrer"
+      onError={(event) => {
+        if (!event.currentTarget.classList.contains("is-fallback")) {
+          event.currentTarget.src = NEWS_FALLBACK_COVER;
+          event.currentTarget.alt = "";
+          event.currentTarget.classList.add("is-fallback");
+        }
+      }}
+    />
+  );
+}
 
 export function HomePage({ articles }: { articles: NewsArticle[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [category, setCategory] = useState("全部");
   const [activeSeason, setActiveSeason] = useState("spring");
   const [activeOffice, setActiveOffice] = useState(0);
+  const [officeAutoplayPaused, setOfficeAutoplayPaused] = useState(false);
   const [activeVideo, setActiveVideo] = useState<{ title: string; type: string; src: string } | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
 
@@ -96,6 +122,17 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
     document.body.style.overflow = activeVideo || menuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [activeVideo, menuOpen]);
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (officeAutoplayPaused || reducedMotion.matches) return;
+
+    const timer = window.setInterval(() => {
+      setActiveOffice((current) => (current + 1) % offices.length);
+    }, 5000);
+
+    return () => window.clearInterval(timer);
+  }, [activeOffice, officeAutoplayPaused]);
 
   function jump(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -331,7 +368,17 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
           <div><p className="eyebrow red">INSIDE ZW</p><h2>在这里，共创日常</h2></div>
           <p>空间不只是工作的容器，也承载交流、沉淀与创新。走进中网，感受一支科技团队真实而有序的日常。</p>
         </div>
-        <div className="office-gallery">
+        <div
+          className="office-gallery"
+          onMouseEnter={() => setOfficeAutoplayPaused(true)}
+          onMouseLeave={() => setOfficeAutoplayPaused(false)}
+          onFocusCapture={() => setOfficeAutoplayPaused(true)}
+          onBlurCapture={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+              setOfficeAutoplayPaused(false);
+            }
+          }}
+        >
           <div className="office-stage">
             {offices.map((office, index) => (
               <img
@@ -339,9 +386,10 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
                 src={office.image}
                 alt={`中网华信${office.name}`}
                 className={activeOffice === index ? "active" : ""}
+                aria-hidden={activeOffice !== index}
               />
             ))}
-            <div className="office-stage-copy">
+            <div className="office-stage-copy" aria-live="polite">
               <span>{String(activeOffice + 1).padStart(2, "0")} / {String(offices.length).padStart(2, "0")}</span>
               <small>{offices[activeOffice].en}</small>
               <h3>{offices[activeOffice].name}</h3>
@@ -355,6 +403,7 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
                 type="button"
                 role="tab"
                 aria-selected={activeOffice === index}
+                aria-label={`展示${office.name}`}
                 className={activeOffice === index ? "active" : ""}
                 onClick={() => setActiveOffice(index)}
               >
@@ -370,7 +419,27 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
 
       <section id="news" className="news-premium">
         <div className="section-heading split"><div><p className="eyebrow red">NEWS & INSIGHTS</p><h2>新闻与洞察</h2></div><p>分享产品创新、行业实践和公司重要进展。</p></div>
-        <div className="news-list">{articles.map((item, index) => <article key={item.id}><span>{String(index + 1).padStart(2, "0")}</span><div><small>{item.date} / {item.tag}</small><h3>{item.title}</h3></div>{item.url ? <a href={item.url} target="_blank" rel="noreferrer" aria-label={`查看${item.title}`}><ArrowRight /></a> : <span className="news-unlinked" aria-hidden="true"><ArrowRight /></span>}</article>)}</div>
+        {articles.length > 0 && (
+          <div className="news-grid">
+            {articles.map((item, index) => (
+              <Link className="news-card" href={item.href} key={item.id} aria-label={`查看新闻：${item.title}`}>
+                <div className="news-card-media">
+                  <NewsImage article={item} priority={index < 3} />
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                </div>
+                <div className="news-card-body">
+                  <div className="news-card-meta">
+                    <time dateTime={item.date}>{item.date}</time>
+                    <small>{item.tag}</small>
+                  </div>
+                  <h3>{item.title}</h3>
+                  {item.summary && <p>{item.summary}</p>}
+                  <span className="news-card-link">了解更多 <ArrowRight /></span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       <section id="contact" className="contact-premium">
