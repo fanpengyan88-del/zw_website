@@ -7,6 +7,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { products, timeline } from "@/data/content";
 import { HistoryTimeline } from "./HistoryTimeline";
+import { AssistantExperience } from "./AssistantExperience";
 import { LeadForm } from "./LeadForm";
 import { Logo } from "./Logo";
 import { ScrollRevealController } from "./ScrollRevealController";
@@ -65,6 +66,7 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
   const [category, setCategory] = useState("全部");
   const [activeSeason, setActiveSeason] = useState("spring");
   const [activeVideo, setActiveVideo] = useState<{ title: string; type: string; src: string } | null>(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
 
   const filteredProducts = useMemo(
     () => category === "全部" ? products : products.filter((item) => item.category === category),
@@ -282,7 +284,8 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
         <small>© 2002-{new Date().getFullYear()} 中网华信科技股份有限公司 版权所有</small>
       </footer>
 
-      <XiaowangGuide onNavigate={jump} />
+      <XiaowangGuide onNavigate={jump} onOpenAssistant={() => setAssistantOpen(true)} />
+      {assistantOpen && <AssistantExperience overlay onClose={() => setAssistantOpen(false)} />}
 
       {activeVideo && <div className="modal" role="dialog" aria-modal="true" aria-label={activeVideo.title} onClick={() => setActiveVideo(null)}>
         <div className="modal-panel" onClick={(event) => event.stopPropagation()}>

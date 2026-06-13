@@ -14,7 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 
-const welcome = "您好呀，我是小网，有什么可以帮助您的呢？";
+const welcome = "您好呀，我是中微子。点击我，开启更丰富的智能交互体验。";
 const acknowledgement = "好的，收到。";
 
 const companyIntroduction = [
@@ -61,21 +61,20 @@ const shortcuts = [
 
 type XiaowangGuideProps = {
   onNavigate: (target: string) => void;
+  onOpenAssistant: () => void;
 };
 
-export function XiaowangGuide({ onNavigate }: XiaowangGuideProps) {
+export function XiaowangGuide({ onNavigate, onOpenAssistant }: XiaowangGuideProps) {
   const [open, setOpen] = useState(false);
   const [awake, setAwake] = useState(false);
-  const [turning, setTurning] = useState(false);
   const [answered, setAnswered] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [paused, setPaused] = useState(false);
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [voiceMessage, setVoiceMessage] = useState("点击麦克风，直接和小网说话");
+  const [voiceMessage, setVoiceMessage] = useState("点击麦克风，直接和中微子说话");
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const turnVideoRef = useRef<HTMLVideoElement | null>(null);
-  const hasWelcomed = useRef(false);
+  const lastHoverWelcomeAt = useRef(0);
   const speechSession = useRef(0);
   const recognitionRef = useRef<{
     start: () => void;
@@ -140,53 +139,28 @@ export function XiaowangGuide({ onNavigate }: XiaowangGuideProps) {
     setAwake(true);
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
     hoverTimer.current = setTimeout(() => {
-      if (!hasWelcomed.current) {
-        hasWelcomed.current = true;
+      const now = Date.now();
+      if (now - lastHoverWelcomeAt.current > 8000) {
+        lastHoverWelcomeAt.current = now;
         speak(welcome);
       }
-    }, 420);
+    }, 360);
   }
 
   function rest() {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    if (speaking) stopSpeech();
     setAwake(false);
   }
 
   function openGuide() {
-    setOpen(true);
+    stopSpeech();
+    setOpen(false);
     setAwake(false);
-    if (!speaking) {
-      speak(welcome);
-    }
-    hasWelcomed.current = true;
+    onOpenAssistant();
   }
 
   function handleLauncherClick() {
-    if (open) {
-      closeGuide();
-      return;
-    }
-
-    if (turning) return;
-
-    const video = turnVideoRef.current;
-    if (!video || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      openGuide();
-      return;
-    }
-
-    setAwake(false);
-    setTurning(true);
-    video.currentTime = 0;
-    void video.play().catch(() => {
-      setTurning(false);
-      openGuide();
-    });
-  }
-
-  function finishTurn() {
-    if (!turning) return;
-    setTurning(false);
     openGuide();
   }
 
@@ -275,7 +249,7 @@ export function XiaowangGuide({ onNavigate }: XiaowangGuideProps) {
     recognition.onerror = (event: any) => {
       setListening(false);
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        setVoiceMessage("需要允许麦克风权限，小网才能听见你");
+        setVoiceMessage("需要允许麦克风权限，中微子才能听见您");
       } else if (event.error === "no-speech") {
         setVoiceMessage("没有听清，请靠近麦克风再试一次");
       } else {
@@ -331,8 +305,8 @@ export function XiaowangGuide({ onNavigate }: XiaowangGuideProps) {
 
   return (
     <aside
-      className={`xiaowang-guide ${open ? "is-open" : ""} ${awake ? "is-awake" : ""} ${turning ? "is-turning" : ""}`}
-      aria-label="小网智能向导"
+      className={`xiaowang-guide ${open ? "is-open" : ""} ${awake ? "is-awake" : ""}`}
+      aria-label="中微子智能向导"
     >
       {!open && awake && (
         <div className="xiaowang-hover-greeting" role="status">
@@ -349,7 +323,7 @@ export function XiaowangGuide({ onNavigate }: XiaowangGuideProps) {
                 <img src="/media/brand/xiaowang-transparent.png" alt="" />
               </span>
               <span>
-                <b>小网</b>
+                <b>中微子</b>
                 <small><i /> 智能向导在线</small>
               </span>
             </div>
@@ -360,7 +334,7 @@ export function XiaowangGuide({ onNavigate }: XiaowangGuideProps) {
               {speaking && (
                 <button onClick={stopSpeech} aria-label="停止播报"><Stop weight="fill" /></button>
               )}
-              <button onClick={closeGuide} aria-label="关闭小网助手"><X /></button>
+              <button onClick={closeGuide} aria-label="关闭中微子助手"><X /></button>
             </div>
           </div>
 
@@ -392,7 +366,7 @@ export function XiaowangGuide({ onNavigate }: XiaowangGuideProps) {
                 <span className="xiaowang-mic-ring" />
               </button>
               <div>
-                <b>{listening ? "正在聆听" : "语音问小网"}</b>
+                <b>{listening ? "正在聆听" : "语音问中微子"}</b>
                 <p>{transcript || voiceMessage}</p>
               </div>
               <span className="xiaowang-wave" aria-hidden="true">
@@ -403,7 +377,7 @@ export function XiaowangGuide({ onNavigate }: XiaowangGuideProps) {
             {answered && (
               <div className="xiaowang-answer" aria-live="polite">
                 <div className="xiaowang-answer-status">
-                  <span><i /> {speaking ? paused ? "播报已暂停" : "小网正在为你讲解" : "回答已就绪"}</span>
+                  <span><i /> {speaking ? paused ? "播报已暂停" : "中微子正在为您讲解" : "回答已就绪"}</span>
                   <button onClick={() => speak(speechSegments)}>
                     <Play weight="fill" /> 重新播报
                   </button>
@@ -445,26 +419,14 @@ export function XiaowangGuide({ onNavigate }: XiaowangGuideProps) {
         onBlur={rest}
         onClick={handleLauncherClick}
         aria-expanded={open}
-        aria-busy={turning}
-        aria-label={open ? "关闭小网助手" : "打开小网助手"}
+        aria-label={open ? "关闭中微子助手" : "打开中微子助手"}
       >
         <span className="xiaowang-spark spark-one"><Sparkle weight="fill" /></span>
         <span className="xiaowang-spark spark-two"><Sparkle weight="fill" /></span>
         <span className="xiaowang-spark spark-three"><Sparkle weight="fill" /></span>
         <span className="xiaowang-launcher-image">
           <img src="/media/brand/xiaowang-transparent.png" alt="" />
-          <video
-            ref={turnVideoRef}
-            src="/media/brand/xiaowang-turn.mp4"
-            muted
-            playsInline
-            preload="auto"
-            onEnded={finishTurn}
-            onError={finishTurn}
-            aria-hidden="true"
-          />
         </span>
-        <span className="xiaowang-status"><ChatCircleDots weight="fill" /></span>
       </button>
     </aside>
   );
