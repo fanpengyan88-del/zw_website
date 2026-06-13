@@ -422,7 +422,14 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
         {articles.length > 0 && (
           <div className="news-grid">
             {articles.map((item, index) => (
-              <Link className="news-card" href={item.href} key={item.id} aria-label={`查看新闻：${item.title}`}>
+              <Link
+                className="news-card"
+                href={item.href}
+                key={item.id}
+                aria-label={`查看新闻：${item.title}`}
+                target={item.href.startsWith("http") ? "_blank" : undefined}
+                rel={item.href.startsWith("http") ? "noreferrer" : undefined}
+              >
                 <div className="news-card-media">
                   <NewsImage article={item} priority={index < 3} />
                   <span>{String(index + 1).padStart(2, "0")}</span>

@@ -10,7 +10,7 @@ async function getNews() {
     return fallbackNews.map((item, index) => ({
       id: `fallback-${index}`,
       ...item,
-      href: `/news/${item.slug}`,
+      href: item.href || `/news/${item.slug}`,
     }));
   }
 
@@ -50,7 +50,7 @@ async function getNews() {
   return fallbackNews.map((item, index) => ({
     id: `fallback-${index}`,
     ...item,
-    href: `/news/${item.slug}`,
+    href: item.href || `/news/${item.slug}`,
   }));
 }
 
