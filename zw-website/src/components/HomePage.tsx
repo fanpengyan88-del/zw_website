@@ -14,8 +14,8 @@ import { ScrollRevealController } from "./ScrollRevealController";
 import { XiaowangGuide } from "./XiaowangGuide";
 
 const nav = [
-  ["首页", "top"], ["产品能力", "products"], ["行业解决方案", "solutions"],
-  ["案例成果", "cases"], ["视频中心", "videos"], ["关于中网", "about"],["新闻动态", "news"],
+  ["首页", "top"], ["产品能力", "products"],
+  ["案例成果", "solutions"], ["视频创作", "videos"], ["关于中网", "about"],["新闻动态", "news"],
 ];
 
 const platforms = [
