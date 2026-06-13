@@ -14,7 +14,6 @@ const phases = [
   { until: 2017, name: "技术深耕", en: "TECHNOLOGY" },
   { until: 2021, name: "能力跃迁", en: "GROWTH" },
   { until: 2025, name: "生态拓展", en: "ECOSYSTEM" },
-  { until: 2026, name: "向新而行", en: "FUTURE READY" },
 ];
 
 function getPhase(year: string) {
@@ -31,9 +30,12 @@ export function HistoryTimeline({ items }: HistoryTimelineProps) {
   const phase = getPhase(active.year);
 
   useEffect(() => {
-    yearsRef.current
-      ?.querySelector<HTMLElement>(`[data-index="${activeIndex}"]`)
-      ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    const container = yearsRef.current;
+    const activeYear = container?.querySelector<HTMLElement>(`[data-index="${activeIndex}"]`);
+    if (!container || !activeYear) return;
+
+    const targetLeft = activeYear.offsetLeft - (container.clientWidth - activeYear.offsetWidth) / 2;
+    container.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
   }, [activeIndex]);
 
   function select(index: number) {

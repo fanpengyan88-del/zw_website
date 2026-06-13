@@ -213,15 +213,6 @@ export const timeline: TimelineYear[] = [
     ],
   },
   {
-    year: "2026",
-    events: [
-      {
-        category: "发展",
-        title: "面向新一轮数字化与智能化浪潮，持续深化 AI、数据、安全与低空经济能力布局",
-      },
-    ],
-  },
-  {
     year: "未来",
     events: [
       {

@@ -60,13 +60,13 @@ await check("四季顺序与完整封面", async () => {
 await check("发展历程横向滚动", async () => {
   const years = desktop.locator(".history-years button");
   const count = await years.count();
-  if (count !== 22) throw new Error(`expected 22 timeline years, got ${count}`);
+  if (count !== 21) throw new Error(`expected 21 timeline years, got ${count}`);
   const initialYear = await desktop.locator(".history-year strong").innerText();
   if (initialYear !== "未来") throw new Error(`expected initial year 未来, got ${initialYear}`);
   await desktop.getByRole("button", { name: "查看更早年份" }).click();
   await desktop.waitForTimeout(250);
   const previousYear = await desktop.locator(".history-year strong").innerText();
-  if (previousYear !== "2026") throw new Error(`expected previous year 2026, got ${previousYear}`);
+  if (previousYear !== "2025") throw new Error(`expected previous year 2025, got ${previousYear}`);
   const connectedSegments = await desktop.locator(".history-years button:not(:last-child)").count();
   if (connectedSegments !== count - 1) throw new Error("timeline connector segments are incomplete");
   await years.filter({ hasText: "2002" }).click();

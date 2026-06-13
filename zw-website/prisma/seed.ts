@@ -10,7 +10,7 @@ async function main() {
     create: {
       id: "default",
       companyName: "中网华信科技股份有限公司",
-      hotline: "400-639-1991",
+      hotline: "0351-8330236",
       address: "山西省太原市综改示范区南中环街529号D座20层",
       icp: "晋B2-20050002-2",
     },

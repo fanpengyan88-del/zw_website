@@ -9,11 +9,12 @@ import { products, timeline } from "@/data/content";
 import { HistoryTimeline } from "./HistoryTimeline";
 import { LeadForm } from "./LeadForm";
 import { Logo } from "./Logo";
+import { ScrollRevealController } from "./ScrollRevealController";
 import { XiaowangGuide } from "./XiaowangGuide";
 
 const nav = [
   ["首页", "top"], ["产品能力", "products"], ["行业解决方案", "solutions"],
-  ["案例成果", "cases"], ["视频中心", "videos"], ["新闻动态", "news"], ["关于中网", "about"],
+  ["案例成果", "cases"], ["视频中心", "videos"], ["关于中网", "about"],["新闻动态", "news"],
 ];
 
 const platforms = [
@@ -83,6 +84,7 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
 
   return (
     <main id="top">
+      <ScrollRevealController />
       <header className="site-header">
         <button className="brand-button" onClick={() => jump("top")} aria-label="返回首页">
           <Logo />
@@ -91,7 +93,7 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
         <nav className={menuOpen ? "open" : ""} aria-label="主导航">
           {nav.map(([label, id]) => <button key={id} onClick={() => jump(id)}>{label}</button>)}
         </nav>
-        <a className="header-phone" href="tel:4006391991"><Phone weight="fill" /> 400-639-1991</a>
+        <a className="header-phone" href="tel:03518330236"><Phone weight="fill" /> 0351-8330236</a>
         <button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen}>
           {menuOpen ? <X /> : <List />}
         </button>
@@ -189,7 +191,25 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
           <div><small>02 / SMART INDUSTRY</small><h3>工业数字化与安全生产</h3><p>融合设备、数据与智能分析，实现生产过程可视、风险可控、运营可优化。</p><button onClick={() => jump("contact")}>咨询行业方案 <ArrowRight /></button></div>
         </div>
         <div className="industry-index">
-          {industries.map(({ name, tag, desc, icon: Icon }) => <article key={name}><Icon weight="thin" /><small>{tag}</small><h3>{name}</h3><p>{desc}</p></article>)}
+          <div className="industry-index-heading">
+            <p className="eyebrow red">MORE INDUSTRIES</p>
+            <h3>更多行业场景</h3>
+            <p>以统一数字底座适配不同组织的业务流程与安全要求。</p>
+          </div>
+          <div className="industry-index-list">
+            {industries.map(({ name, tag, desc, icon: Icon }, index) => (
+              <button key={name} type="button" onClick={() => jump("contact")}>
+                <span className="industry-index-number">{String(index + 1).padStart(2, "0")}</span>
+                <span className="industry-index-icon"><Icon weight="thin" /></span>
+                <span className="industry-index-copy">
+                  <small>{tag}</small>
+                  <strong>{name}</strong>
+                  <span>{desc}</span>
+                </span>
+                <ArrowRight className="industry-index-arrow" />
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -250,14 +270,14 @@ export function HomePage({ articles }: { articles: NewsArticle[] }) {
       </section>
 
       <section id="contact" className="contact-premium">
-        <div className="contact-copy"><p className="eyebrow">START A CONVERSATION</p><h2>让技术走进业务，<br />让价值真正发生。</h2><p>告诉我们你的业务场景，专家团队将提供针对性的产品与解决方案建议。</p><a href="tel:4006391991"><Phone weight="fill" /> 400-639-1991</a></div>
+        <div className="contact-copy"><p className="eyebrow">START A CONVERSATION</p><h2>让技术走进业务，<br />让价值真正发生。</h2><p>告诉我们你的业务场景，专家团队将提供针对性的产品与解决方案建议。</p><a href="tel:03518330236"><Phone weight="fill" /> 0351-8330236</a></div>
         <LeadForm compact />
       </section>
 
       <footer>
         <div><Logo /><p>中网华信科技股份有限公司<br />让数据更安全，让决策更智慧</p></div>
         <div><b>快速导航</b>{nav.slice(1).map(([label, id]) => <button key={id} onClick={() => jump(id)}>{label}</button>)}</div>
-        <div><b>联系我们</b><p>400-639-1991<br />0351-8330236<br />山西省太原市综改示范区南中环街529号D座20层</p></div>
+        <div><b>联系我们</b><p>0351-8330236<br />山西省太原市综改示范区南中环街529号D座20层</p></div>
         <div><b>合规信息</b><p>晋B2-20050002-2<br />晋公网安备14019202000250号<br />证券代码：870298</p></div>
         <small>© 2002-{new Date().getFullYear()} 中网华信科技股份有限公司 版权所有</small>
       </footer>
