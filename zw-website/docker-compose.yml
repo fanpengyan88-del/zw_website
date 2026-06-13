@@ -1,0 +1,85 @@
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET}
+      IP_HASH_SECRET: ${IP_HASH_SECRET}
+      WECHAT_APP_ID: ${WECHAT_APP_ID:-}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
+      WECHAT_SYNC_TOKEN: ${WECHAT_SYNC_TOKEN:-}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+      TRUST_PROXY: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./public/media:/app/public/media:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - frontend
+      - backend
+
+  postgres:
+    image: postgres:16.14-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: zw_website
+      POSTGRES_USER: zw_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      MIGRATION_DB_USER: zw_migrator
+      MIGRATION_DB_PASSWORD: ${MIGRATION_DB_PASSWORD}
+      APP_DB_USER: zw_app
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-app-user.sh:/docker-entrypoint-initdb.d/10-init-app-user.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zw_admin -d zw_website"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - backend
+
+  nginx:
+    image: nginx:1.30.2-alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - frontend
+
+volumes:
+  postgres_data:
+
+networks:
+  frontend:
+  backend:
+    internal: true

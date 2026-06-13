@@ -1,0 +1,10 @@
+.git
+.next
+.env
+.env.*
+.npm-cache
+certs
+coverage
+node_modules
+qa-*.png
+*.log

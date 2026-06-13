@@ -1,0 +1,13 @@
+# Workspace-local files
+.tmp/
+.codex/
+.agents/
+
+# OS and editor metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*~

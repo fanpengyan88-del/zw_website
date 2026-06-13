@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Industry {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  summary     String
+  sortOrder   Int        @default(0)
+  solutions   Solution[]
+  caseStudies CaseStudy[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Product {
+  id          String        @id @default(cuid())
+  name        String
+  nameEn      String?
+  slug        String        @unique
+  category    String
+  summary     String
+  content     Json
+  cover       String?
+  reportUrl   String?
+  status      PublishStatus @default(DRAFT)
+  featured    Boolean       @default(false)
+  sortOrder   Int           @default(0)
+  publishedAt DateTime?
+  seoTitle    String?
+  seoDesc     String?
+  solutions   ProductSolution[]
+  cases       ProductCase[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Solution {
+  id          String        @id @default(cuid())
+  name        String
+  nameEn      String?
+  slug        String        @unique
+  summary     String
+  content     Json
+  cover       String?
+  status      PublishStatus @default(DRAFT)
+  featured    Boolean       @default(false)
+  sortOrder   Int           @default(0)
+  publishedAt DateTime?
+  industryId  String
+  industry    Industry      @relation(fields: [industryId], references: [id])
+  products    ProductSolution[]
+  cases       SolutionCase[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model CaseStudy {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  summary     String
+  content     Json
+  cover       String?
+  clientName  String?
+  metrics     Json?
+  status      PublishStatus @default(DRAFT)
+  featured    Boolean       @default(false)
+  publishedAt DateTime?
+  industryId  String?
+  industry    Industry?     @relation(fields: [industryId], references: [id])
+  products    ProductCase[]
+  solutions   SolutionCase[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model ProductSolution {
+  productId  String
+  solutionId String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  solution   Solution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  @@id([productId, solutionId])
+}
+
+model ProductCase {
+  productId String
+  caseId    String
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  case      CaseStudy @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  @@id([productId, caseId])
+}
+
+model SolutionCase {
+  solutionId String
+  caseId     String
+  solution   Solution  @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  case       CaseStudy @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  @@id([solutionId, caseId])
+}
+
+model Article {
+  id              String        @id @default(cuid())
+  title           String
+  slug            String        @unique
+  summary         String
+  contentHtml     String
+  cover           String?
+  category        String
+  source          String        @default("manual")
+  sourceId        String?       @unique
+  sourceUrl       String?       @unique
+  status          PublishStatus @default(DRAFT)
+  featured        Boolean       @default(false)
+  publishedAt     DateTime?
+  seoTitle        String?
+  seoDesc         String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Video {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  category    String
+  description String?
+  sourceUrl   String
+  posterUrl   String?
+  duration    Int?
+  status      PublishStatus @default(DRAFT)
+  featured    Boolean       @default(false)
+  sortOrder   Int           @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model TimelineEvent {
+  id        String   @id @default(cuid())
+  year      String
+  title     String
+  detail    String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  name      String
+  company   String
+  phone     String
+  interest  String
+  message   String?
+  ipHash    String?
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SiteSettings {
+  id             String   @id @default("default")
+  companyName    String
+  hotline        String
+  address        String
+  icp            String?
+  publicSecurity String?
+  qrCodeWechat   String?
+  qrCodeAccount  String?
+  updatedAt      DateTime @updatedAt
+}
+
+model SyncLog {
+  id        String   @id @default(cuid())
+  source    String
+  status    String
+  message   String
+  itemCount Int      @default(0)
+  createdAt DateTime @default(now())
+}
