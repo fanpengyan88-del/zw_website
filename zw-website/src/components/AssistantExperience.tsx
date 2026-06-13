@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Buildings,
+  Cube,
   Database,
   Keyboard,
   Microphone,
@@ -54,27 +55,31 @@ type RecognitionEventLike = {
 };
 
 const prompts = [
-  { icon: Buildings, label: "介绍一下中网华信" },
-  { icon: ShieldCheck, label: "介绍你们的安全能力" },
-  { icon: Database, label: "我想了解数据治理" },
-  { icon: UserFocus, label: "帮我联系方案顾问" },
+  { icon: Buildings, label: "介绍中网华信" },
+  { icon: Cube, label: "介绍产品体系" },
+  { icon: ShieldCheck, label: "了解安全能力" },
+  { icon: Database, label: "了解数据治理" },
+  { icon: UserFocus, label: "联系方案顾问" },
 ];
 
 const responses = {
   company:
     "中网华信科技股份有限公司成立于 2002 年，证券代码 870298，是一家面向政企客户的数字技术服务商。公司现有员工 200 余人，拥有自主知识产权、专利和企业资质 300 余项，形成了大数据管控、行业算法、安全应用和智能互联等核心能力。中网华信长期聚焦人工智能、数据治理、信息安全与数字化转型，为党政、校园、工业和公共安全等领域提供产品、解决方案与持续运营服务。",
+  products:
+    "中网华信目前形成了覆盖人工智能、业务应用、数据能力和安全防护的产品体系。主要产品包括：音频智能分析告警系统，可实时识别风险声音并分级告警；视频图像早期火灾报警系统，可通过图像智能识别烟雾与火焰；安全保密套件管理系统，用于终端、服务器和外设的统一安全管控；中网校园智慧安全守护平台，服务校园消防、防欺凌和危险行为预警；中网数字化转型能力平台，以业务、数据、人工智能和安全四大中台支撑组织持续运营；人工智能办公大模型应用平台，融合多模型、知识库与工作流；中网鉴图神探系统，提供人脸比对、以图搜图和智能图像分析。这些产品可根据党政、校园、工业和公共安全等场景进行组合与定制。",
   security:
     "中网华信提供覆盖规划、建设与运营的安全能力，包括网络安全、数据安全、密码应用、信创适配和安全运营。我们会结合客户现状，形成可持续演进的一体化防护体系。",
   data:
     "我们的数据治理服务覆盖数据标准、质量、资产、目录、安全和应用。通过统一的数据能力平台，帮助组织打通数据、明确权责，并让数据真正进入业务决策。",
   contact:
-    "好的，我可以帮你进入方案沟通流程。你可以返回官网填写联系信息，也可以拨打 400-0351-586，与方案顾问直接沟通。",
+    "好的，我可以帮您进入方案沟通流程。您可以返回官网填写联系信息，也可以拨打 0351-8330236，与方案顾问直接沟通。",
   general:
     "我可以为你介绍中网华信的安全能力、数据治理、AI 应用与行业解决方案。你也可以告诉我所在行业和当前问题，我会给出更有针对性的建议。",
 };
 
 function chooseResponse(question: string) {
   if (/中网华信|中网公司|你们公司|公司介绍|介绍公司|介绍一下公司/.test(question)) return responses.company;
+  if (/产品|产品体系|产品介绍|有哪些产品|你们卖什么/.test(question)) return responses.products;
   if (/联系|顾问|电话|预约/.test(question)) return responses.contact;
   if (/数据|治理|资产|中台/.test(question)) return responses.data;
   if (/安全|防护|密码|信创/.test(question)) return responses.security;
@@ -210,6 +215,7 @@ export function AssistantExperience({ onClose, overlay = false }: AssistantExper
     (question: string) => {
       const cleanQuestion = question.trim();
       if (!cleanQuestion) return;
+      setKeyboardOpen(false);
       recognitionRef.current?.abort();
       setTranscript(cleanQuestion);
       setState("thinking");
@@ -274,6 +280,7 @@ export function AssistantExperience({ onClose, overlay = false }: AssistantExper
 
   async function startListening() {
     stopAudio();
+    setKeyboardOpen(false);
     const browserWindow = window as typeof window & {
       SpeechRecognition?: new () => RecognitionInstance;
       webkitSpeechRecognition?: new () => RecognitionInstance;
@@ -293,10 +300,12 @@ export function AssistantExperience({ onClose, overlay = false }: AssistantExper
     }
 
     const recognition = new Recognition();
+    let hasUsableResult = false;
     recognition.lang = "zh-CN";
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.onstart = () => {
+      setKeyboardOpen(false);
       setAnswer("");
       setTranscript("");
       setState("listening");
@@ -308,9 +317,17 @@ export function AssistantExperience({ onClose, overlay = false }: AssistantExper
         text += event.results[index][0].transcript;
       }
       setTranscript(text);
-      if (event.results[event.results.length - 1].isFinal) answerQuestion(text);
+      if (text.trim()) hasUsableResult = true;
+      if (event.results[event.results.length - 1].isFinal) {
+        setKeyboardOpen(false);
+        answerQuestion(text);
+      }
     };
     recognition.onerror = (event) => {
+      if (event.error === "aborted" || hasUsableResult) {
+        setKeyboardOpen(false);
+        return;
+      }
       setState("idle");
       if (event.error === "not-allowed") {
         setKeyboardOpen(true);

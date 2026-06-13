@@ -573,10 +573,10 @@
 }
 
 .suggestions {
-  width: min(890px, calc(100% - 48px));
+  width: min(1010px, calc(100% - 48px));
   margin: 4px auto 22px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 18px;
   background: rgba(7, 15, 25, .7);
@@ -585,12 +585,14 @@
 }
 
 .suggestions button {
-  min-height: 56px;
-  padding: 0 16px;
+  min-width: 0;
+  min-height: 54px;
+  padding: 0 14px;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto max-content auto;
+  justify-content: center;
   align-items: center;
-  gap: 13px;
+  gap: 10px;
   border: 0;
   border-right: 1px solid rgba(255, 255, 255, .1);
   color: #d6dde4;
@@ -604,7 +606,7 @@
 .suggestions button:hover { color: white; background: rgba(225, 44, 51, .08); }
 .suggestions button > svg:first-child { color: var(--assistant-red); font-size: 22px; }
 .suggestions button > svg:last-child { color: #607184; }
-.suggestions span { font-size: 13px; font-weight: 580; }
+.suggestions span { overflow: hidden; font-size: 12px; font-weight: 580; text-overflow: ellipsis; white-space: nowrap; }
 
 @keyframes streamScan {
   from { transform: translateY(0); }
@@ -717,17 +719,20 @@
   .suggestions {
     width: calc(100% - 28px);
     margin: 18px auto 16px;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    overflow-x: auto;
     border-radius: 14px;
+    scrollbar-width: none;
   }
   .suggestions button {
+    min-width: 172px;
     min-height: 49px;
     padding: 0 16px;
     border-right: 0;
     border-bottom: 1px solid rgba(255, 255, 255, .08);
   }
-  .suggestions button:nth-child(2n) { border-right: 0; }
-  .suggestions button:nth-last-child(-n+2) { border-bottom: 0; }
+  .suggestions button + button { border-left: 1px solid rgba(255, 255, 255, .08); }
+  .suggestions button:last-child { border-bottom: 1px solid rgba(255, 255, 255, .08); }
   .inputPanel { bottom: 8px; }
 }
 
