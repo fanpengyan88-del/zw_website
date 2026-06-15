@@ -14,6 +14,10 @@ import {
   readJsonObject,
 } from "@/lib/request-security";
 
+function usesSecureCookies() {
+  return process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https://") ?? false;
+}
+
 export async function GET(request: NextRequest) {
   return NextResponse.json(
     { authenticated: isAdminRequest(request), configured: isAdminConfigured() },
@@ -47,7 +51,7 @@ export async function POST(request: NextRequest) {
   response.cookies.set(ADMIN_SESSION_COOKIE, session.value, {
     httpOnly: true,
     sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
+    secure: usesSecureCookies(),
     path: "/",
     maxAge: session.maxAge,
   });
@@ -62,7 +66,7 @@ export async function DELETE(request: NextRequest) {
   response.cookies.set(ADMIN_SESSION_COOKIE, "", {
     httpOnly: true,
     sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
+    secure: usesSecureCookies(),
     path: "/",
     maxAge: 0,
   });

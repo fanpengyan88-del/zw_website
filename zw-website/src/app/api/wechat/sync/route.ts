@@ -74,6 +74,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "同步任务正在执行，请稍后再试。" }, { status: 409 });
   }
 
+  let publishAfterSync = false;
+  try {
+    const text = await request.text();
+    if (text) {
+      const body: unknown = JSON.parse(text);
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        return NextResponse.json({ message: "请求格式不正确。" }, { status: 400 });
+      }
+      publishAfterSync = (body as { publish?: unknown }).publish === true;
+    }
+  } catch {
+    return NextResponse.json({ message: "请求格式不正确。" }, { status: 400 });
+  }
+
   syncInProgress = true;
   try {
     const authResponse = await fetch(
@@ -90,6 +104,7 @@ export async function POST(request: NextRequest) {
     const pageSize = 20;
     let totalCount = 0;
     let pageCount = 0;
+    const syncedSourceIds: string[] = [];
 
     do {
       pageCount += 1;
@@ -148,6 +163,7 @@ export async function POST(request: NextRequest) {
               status: "DRAFT",
             },
           });
+          syncedSourceIds.push(articleSourceId);
           count += 1;
         }
       }
@@ -156,10 +172,28 @@ export async function POST(request: NextRequest) {
       offset += fetchedCount;
     } while (offset < totalCount);
 
+    let publishedCount = 0;
+    if (publishAfterSync && syncedSourceIds.length > 0) {
+      const published = await prisma.article.updateMany({
+        where: {
+          sourceId: { in: syncedSourceIds },
+          status: "DRAFT",
+        },
+        data: {
+          status: "PUBLISHED",
+          publishedAt: new Date(),
+        },
+      });
+      publishedCount = published.count;
+    }
+
+    const message = publishAfterSync
+      ? `同步完成，共处理 ${count} 篇文章，发布 ${publishedCount} 篇`
+      : `同步完成，共处理 ${count} 篇文章`;
     await prisma.syncLog.create({
-      data: { source: "wechat", status: "success", message: `同步完成，共处理 ${count} 篇文章`, itemCount: count },
+      data: { source: "wechat", status: "success", message, itemCount: count },
     });
-    return NextResponse.json({ ok: true, count, totalCount });
+    return NextResponse.json({ ok: true, count, publishedCount, totalCount });
   } catch (error) {
     const message = error instanceof Error ? error.message : "未知错误";
     try { await prisma.syncLog.create({ data: { source: "wechat", status: "failed", message } }); } catch {}

@@ -1,5 +1,5 @@
 param(
-  [string]$IpAddress = "192.168.1.44",
+  [string]$IpAddress = "192.168.1.12",
   [string]$OutputDirectory,
   [string]$Password = "zw-lan-https"
 )

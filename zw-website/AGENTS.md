@@ -290,7 +290,7 @@ node scripts/visual-qa.mjs
 
 ## 16. 已知环境耦合
 
-- `scripts/start-lan-server.ps1` 写死了局域网 IP `192.168.1.44`。
+- `scripts/start-lan-server.ps1` 写死了局域网 IP `192.168.1.12`。
 - 该脚本还写死 Node 路径 `D:\nvm4w\nodejs\node.exe`。
 - 局域网证书默认密码为 `zw-lan-https`，只适合本地开发，不可用于生产。
 - 脚本会终止占用 3000、3001 端口的进程，执行前应确认没有其他重要服务。

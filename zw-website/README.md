@@ -29,7 +29,16 @@ curl -X POST https://your-domain/api/wechat/sync \
   -H "Authorization: Bearer $WECHAT_SYNC_TOKEN"
 ```
 
-同步接口会分页拉取已发布素材、按微信文章 ID 去重，并把新文章放入草稿状态。运营人员可在 `/admin` 中点击“立即同步”，预览文章后执行发布、撤回或归档；只有已发布文章会进入首页新闻区。
+同步接口会分页拉取已发布素材并按微信文章 ID 去重。运营人员可在 `/admin` 中选择“同步到待审核”，逐篇预览后发布；也可以选择“同步并发布”，将本次同步到的草稿直接发布到官网。只有已发布文章会进入首页新闻区，发布和撤回无需重新构建网站。
+
+定时任务也可以直接同步并发布：
+
+```bash
+curl -X POST https://www.example.com/api/wechat/sync \
+  -H "Authorization: Bearer $WECHAT_SYNC_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"publish":true}'
+```
 
 当数据库不可用、尚无已发布文章或微信凭证未配置时，首页会继续显示 `src/data/content.ts` 中的静态新闻，不影响官网访问。同步接口会过滤脚本、iframe、object、embed 和事件属性；生产上线时应再配置对象存储，将微信封面及正文图片转存到自有域名。
 

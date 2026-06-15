@@ -11,6 +11,9 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type NewsDetail = {
   slug: string;
   title: string;
@@ -21,10 +24,6 @@ type NewsDetail = {
   paragraphs: string[];
   sourceUrl: string | null;
 };
-
-export function generateStaticParams() {
-  return fallbackNews.map((article) => ({ slug: article.slug }));
-}
 
 function decodeHtmlEntities(value: string) {
   return value

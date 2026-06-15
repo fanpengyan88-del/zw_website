@@ -26,6 +26,7 @@ export default function AdminPage() {
   const [wechatConfigured, setWechatConfigured] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   async function loadDashboard() {
     const [leadResponse, articleResponse] = await Promise.all([
@@ -79,15 +80,21 @@ export default function AdminPage() {
     setWechatConfigured(data.wechatConfigured);
   }
 
-  async function syncWechat() {
-    setBusy("sync");
+  async function syncWechat(publish: boolean) {
+    setBusy(publish ? "sync-publish" : "sync");
     setError("");
+    setNotice("");
     try {
       const response = await fetch("/api/wechat/sync", {
         method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ publish }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "同步失败");
+      setNotice(publish
+        ? `同步完成：处理 ${data.count} 篇，发布 ${data.publishedCount} 篇。官网新闻已更新。`
+        : `同步完成：处理 ${data.count} 篇，文章已进入待审核列表。`);
       await refreshArticles();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "同步失败");
@@ -146,9 +153,10 @@ export default function AdminPage() {
     <div className="admin-content">
       <header><div><p className="eyebrow red">CONTENT OPERATIONS</p><h1>运营总览</h1></div><div className="article-actions"><button onClick={logout}>退出登录</button><button className="button primary" onClick={exportCsv}>导出线索 CSV</button></div></header>
       {error && <p className="admin-alert">{error}</p>}
+      {notice && <p className="admin-alert">{notice}</p>}
       <section id="overview" className="admin-stats"><article><span>已发布文章</span><strong>{articles.filter((item) => item.status === "PUBLISHED").length}</strong></article><article><span>待审核文章</span><strong>{articles.filter((item) => item.status === "DRAFT").length}</strong></article><article><span>待跟进线索</span><strong>{leads.length}</strong></article><article><span>微信公众号</span><strong className={`status ${wechatConfigured ? "ready" : ""}`}>{wechatConfigured ? "已配置" : "未配置 / 降级中"}</strong></article></section>
       <section id="articles" className="admin-panel">
-        <div className="admin-panel-heading"><div><h2>微信公众号文章</h2><p>{latestSync ? `${latestSync.message} · ${new Date(latestSync.createdAt).toLocaleString("zh-CN")}` : "尚无同步记录；未配置凭证时官网继续显示静态新闻。"}</p></div><button className="button primary" onClick={syncWechat} disabled={busy === "sync" || !wechatConfigured}>{busy === "sync" ? "同步中..." : "立即同步"}</button></div>
+        <div className="admin-panel-heading"><div><h2>微信公众号文章</h2><p>{latestSync ? `${latestSync.message} · ${new Date(latestSync.createdAt).toLocaleString("zh-CN")}` : "尚无同步记录；未配置凭证时官网继续显示静态新闻。"}</p></div><div className="article-actions"><button onClick={() => syncWechat(false)} disabled={busy.startsWith("sync") || !wechatConfigured}>{busy === "sync" ? "同步中..." : "同步到待审核"}</button><button className="button primary" onClick={() => syncWechat(true)} disabled={busy.startsWith("sync") || !wechatConfigured}>{busy === "sync-publish" ? "同步发布中..." : "同步并发布"}</button></div></div>
         <div className="table-wrap"><table className="article-table"><thead><tr><th>文章</th><th>来源</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead><tbody>
           {articles.length === 0 ? <tr><td colSpan={5}>暂无数据库文章。官网当前使用静态新闻降级显示。</td></tr> : articles.map((article) => <tr key={article.id}><td><b>{article.title}</b><small>{article.category}</small></td><td>{article.source === "wechat" ? "微信公众号" : "手动"}</td><td><span className={`article-status ${article.status.toLowerCase()}`}>{article.status === "DRAFT" ? "待审核" : article.status === "PUBLISHED" ? "已发布" : "已归档"}</span></td><td>{new Date(article.updatedAt).toLocaleString("zh-CN")}</td><td><div className="article-actions">{article.sourceUrl && <a href={article.sourceUrl} target="_blank" rel="noreferrer">预览</a>}{article.status !== "PUBLISHED" && <button disabled={busy === article.id} onClick={() => setArticleStatus(article.id, "PUBLISHED")}>发布</button>}{article.status === "PUBLISHED" && <button disabled={busy === article.id} onClick={() => setArticleStatus(article.id, "DRAFT")}>撤回</button>}{article.status !== "ARCHIVED" && <button disabled={busy === article.id} onClick={() => setArticleStatus(article.id, "ARCHIVED")}>归档</button>}</div></td></tr>)}
         </tbody></table></div>
